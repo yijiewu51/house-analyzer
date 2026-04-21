@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>综合价值报告 — {{ community_name }}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #1d4ed8;
+    --primary-light: #eff6ff;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --radius: 12px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    background: #f0f4f8;
+    color: var(--gray-900);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .page { max-width: 900px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  /* Header */
+  .report-header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #3b82f6 100%);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    color: white;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .report-header::before {
+    content: '';
+    position: absolute; top: -40px; right: -40px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+  }
+  .header-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+  .header-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .header-sub { opacity: 0.8; font-size: 13px; }
+  .header-meta { margin-top: 14px; display: flex; gap: 20px; flex-wrap: wrap; }
+  .header-meta span { font-size: 12px; opacity: 0.75; }
+
+  /* Score hero */
+  .score-hero {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    background: white;
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    align-items: center;
+  }
+  .score-circle {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: conic-gradient({{ score.grade_color }} {{ score.composite_score }}%, var(--gray-200) 0);
+    position: relative;
+  }
+  .score-circle-inner {
+    width: 76px; height: 76px;
+    border-radius: 50%;
+    background: white;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    position: absolute;
+  }
+  .score-number { font-size: 26px; font-weight: 800; color: {{ score.grade_color }}; line-height: 1; }
+  .score-label { font-size: 11px; color: var(--gray-600); }
+  .score-grade-badge {
+    display: inline-block;
+    background: {{ score.grade_color }};
+    color: white;
+    border-radius: 8px;
+    padding: 4px 14px;
+    font-size: 22px;
+    font-weight: 800;
+    margin-right: 12px;
+  }
+  .score-recommendation { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .score-sub { color: var(--gray-600); font-size: 13px; }
+  .dimension-bars { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .dim-bar-item { display: flex; align-items: center; gap: 8px; }
+  .dim-bar-label { width: 52px; font-size: 12px; color: var(--gray-600); flex-shrink: 0; }
+  .dim-bar-track { flex: 1; height: 6px; background: var(--gray-200); border-radius: 3px; overflow: hidden; }
+  .dim-bar-fill { height: 100%; border-radius: 3px; }
+  .dim-bar-val { width: 28px; text-align: right; font-size: 12px; font-weight: 600; }
+
+  /* Cards grid */
+  .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 600px) { .cards-grid { grid-template-columns: 1fr; } }
+  .card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 13px; font-weight: 600;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .card-icon { font-size: 16px; }
+
+  /* Price analysis */
+  .price-analysis {
+    background: white;
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .price-compare {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .price-item { text-align: center; padding: 14px; border-radius: 8px; }
+  .price-item.actual { background: #fef3c7; }
+  .price-item.predicted { background: #dbeafe; }
+  .price-item.district { background: var(--gray-100); }
+  .price-item-label { font-size: 11px; color: var(--gray-600); margin-bottom: 4px; }
+  .price-item-value { font-size: 20px; font-weight: 800; }
+  .price-item-sub { font-size: 11px; color: var(--gray-600); margin-top: 2px; }
+  .price-item.actual .price-item-value { color: var(--warning); }
+  .price-item.predicted .price-item-value { color: var(--primary); }
+  .discount-banner {
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .discount-banner.positive { background: #dcfce7; border-left: 4px solid var(--success); }
+  .discount-banner.negative { background: #fee2e2; border-left: 4px solid var(--danger); }
+  .discount-banner.neutral { background: #f0f9ff; border-left: 4px solid var(--primary); }
+  .discount-pct { font-size: 22px; font-weight: 800; }
+  .discount-text { font-size: 13px; }
+
+  /* Info rows */
+  .info-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--gray-100); }
+  .info-row:last-child { border-bottom: none; }
+  .info-key { color: var(--gray-600); }
+  .info-val { font-weight: 600; }
+
+  /* Score badges */
+  .score-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .score-badge.high { background: #dcfce7; color: #15803d; }
+  .score-badge.mid { background: #fef9c3; color: #a16207; }
+  .score-badge.low { background: #fee2e2; color: #b91c1c; }
+
+  /* Tier badges */
+  .tier-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .tier-顶级学区 { background: #fef3c7; color: #92400e; }
+  .tier-优质学区 { background: #dcfce7; color: #166534; }
+  .tier-普通学区 { background: var(--gray-100); color: var(--gray-700); }
+  .tier-弱学区 { background: #fee2e2; color: #991b1b; }
+  .tier-无学区信息 { background: var(--gray-100); color: var(--gray-600); }
+
+  /* Chart containers */
+  .chart-wrap { position: relative; height: 220px; margin: 0 auto; }
+  .chart-wrap.radar { height: 260px; }
+
+  /* Undervalued table */
+  .undervalue-section {
+    background: white;
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .uv-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .uv-table th {
+    background: var(--gray-50);
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--gray-600);
+    border-bottom: 2px solid var(--gray-200);
+  }
+  .uv-table td { padding: 9px 10px; border-bottom: 1px solid var(--gray-100); }
+  .uv-table tr:hover td { background: var(--gray-50); }
+  .uv-discount { color: var(--success); font-weight: 700; }
+  .uv-saving { color: var(--primary); font-weight: 600; }
+
+  /* Description blocks */
+  .desc-block {
+    background: var(--gray-50);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--gray-700);
+    margin-top: 10px;
+    line-height: 1.7;
+  }
+
+  /* Disclaimer */
+  .disclaimer {
+    background: var(--gray-100);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    font-size: 12px;
+    color: var(--gray-600);
+    margin-top: 20px;
+    line-height: 1.8;
+  }
+
+  /* Section full-width */
+  .full-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .watermark {
+    text-align: center;
+    font-size: 11px;
+    color: var(--gray-600);
+    margin-top: 12px;
+    opacity: 0.6;
+  }
+
+  .tag { display: inline-block; background: var(--primary-light); color: var(--primary); border-radius: 4px; padding: 1px 7px; font-size: 11px; margin: 2px; }
+
+  @media print {
+    body { background: white; }
+    .page { padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  {% if is_mock_price %}
+  <div style="background:#fef9c3;border:1px solid #fde047;border-radius:10px;padding:12px 18px;margin-bottom:14px;font-size:13px;color:#713f12;display:flex;align-items:center;gap:10px;">
+    <span style="font-size:18px;">⚠️</span>
+    <div>
+      <strong>价格数据说明：</strong>本报告的房源挂牌价格为<strong>区域模拟数据</strong>（链家实时数据需在本地环境获取）。
+      <strong>学区、地铁、配套距离等信息来自高德地图真实数据，具有参考价值。</strong>
+      如需精确价格分析，请在本地运行版本获取链家实时数据。
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Header -->
+  <div class="report-header">
+    <div class="header-badge">🏠 AI综合价值报告</div>
+    <div class="header-title">{{ listing.community_name }} · {{ listing.layout }} {{ listing.area_sqm }}㎡</div>
+    <div class="header-sub">{{ city_name }} · {{ listing.district }} · {{ listing.floor }}/{{ listing.total_floors }}层 · {{ listing.orientation }}</div>
+    <div class="header-meta">
+      <span>📅 生成日期：{{ report_date }}</span>
+      <span>🔢 参考房源：{{ comparable_count }} 套</span>
+      <span>📊 数据来源：链家/贝壳公开数据</span>
+      {% if prediction.mape is not none %}
+      <span>🎯 模型精度：误差 ±{{ "%.1f"|format(prediction.mape * 100) }}%</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Score Hero -->
+  <div class="score-hero">
+    <div class="score-circle">
+      <div class="score-circle-inner">
+        <div class="score-number">{{ score.composite_score|int }}</div>
+        <div class="score-label">综合评分</div>
+      </div>
+    </div>
+    <div>
+      <div style="margin-bottom:10px;">
+        <span class="score-grade-badge">{{ score.grade }}</span>
+        <span class="score-recommendation">{{ score.recommendation }}</span>
+      </div>
+      <div class="score-sub">相对区域均价偏差：
+        {% if prediction.discount_pct > 0 %}
+          <strong style="color:var(--success)">低估 {{ prediction.discount_pct }}%</strong>（低于模型预测价 {{ (prediction.predicted_price - listing.unit_price_sqm)|abs|format_price }} 元/㎡）
+        {% elif prediction.discount_pct < -2 %}
+          <strong style="color:var(--danger)">高估 {{ prediction.discount_pct|abs }}%</strong>（高于模型预测价 {{ (listing.unit_price_sqm - prediction.predicted_price)|format_price }} 元/㎡）
+        {% else %}
+          <strong style="color:var(--primary)">定价合理</strong>（接近模型预测价）
+        {% endif %}
+      </div>
+      <!-- Dimension bars -->
+      <div class="dimension-bars" style="margin-top:14px;">
+        {% set dim_labels = {"price_value":"性价比","school":"学区","amenity":"配套","sunlight":"采光","noise":"噪音","decoration":"装修","layout":"户型"} %}
+        {% for key, label in dim_labels.items() %}
+        <div class="dim-bar-item">
+          <span class="dim-bar-label">{{ label }}</span>
+          <div class="dim-bar-track">
+            <div class="dim-bar-fill" style="width:{{ score.dimensions[key] }}%;background:{% if score.dimensions[key] >= 75 %}var(--success){% elif score.dimensions[key] >= 55 %}var(--warning){% else %}var(--danger){% endif %};"></div>
+          </div>
+          <span class="dim-bar-val" style="color:{% if score.dimensions[key] >= 75 %}var(--success){% elif score.dimensions[key] >= 55 %}var(--warning){% else %}var(--danger){% endif %}">{{ score.dimensions[key] }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Price Analysis -->
+  <div class="price-analysis">
+    <div class="section-title">📊 价格分析</div>
+
+    <!-- Three price boxes -->
+    <div class="price-compare">
+      <div class="price-item actual">
+        <div class="price-item-label">挂牌单价</div>
+        <div class="price-item-value">{{ listing.unit_price_sqm|format_price }}</div>
+        <div class="price-item-sub">元/㎡ · 总价 {{ listing.total_price_wan }}万</div>
+      </div>
+      <div class="price-item predicted">
+        <div class="price-item-label">AI预测公允价</div>
+        <div class="price-item-value">{{ prediction.predicted_price|format_price }}</div>
+        <div class="price-item-sub">区间 {{ prediction.confidence_low|format_price }}–{{ prediction.confidence_high|format_price }}</div>
+      </div>
+      <div class="price-item district">
+        <div class="price-item-label">板块均价参考</div>
+        <div class="price-item-value">{{ district_avg_price|format_price }}</div>
+        <div class="price-item-sub">元/㎡ · {{ listing.district }}</div>
+      </div>
+    </div>
+
+    <!-- Discount banner -->
+    {% if prediction.discount_pct >= 5 %}
+    <div class="discount-banner positive">
+      <div>
+        <div class="discount-pct" style="color:var(--success)">↓ {{ prediction.discount_pct }}%</div>
+        <div style="font-size:11px;color:var(--gray-600)">低于公允价</div>
+      </div>
+      <div class="discount-text">
+        <strong>该房源定价明显低于市场预测价</strong>，每平方米节省 <strong>{{ (prediction.predicted_price - listing.unit_price_sqm)|format_price }}</strong> 元，
+        按建筑面积计算总计可节省约 <strong>{{ ((prediction.predicted_price - listing.unit_price_sqm) * listing.area_sqm / 10000)|round(1) }} 万元</strong>。
+        属于值得重点关注的低估房源。
+      </div>
+    </div>
+    {% elif prediction.discount_pct <= -5 %}
+    <div class="discount-banner negative">
+      <div>
+        <div class="discount-pct" style="color:var(--danger)">↑ {{ prediction.discount_pct|abs }}%</div>
+        <div style="font-size:11px;color:var(--gray-600)">高于公允价</div>
+      </div>
+      <div class="discount-text">
+        <strong>该房源挂牌价高于市场预测价</strong>，每平方米溢价 <strong>{{ (listing.unit_price_sqm - prediction.predicted_price)|format_price }}</strong> 元。
+        建议与业主谈判降价或寻找同板块替代房源。
+      </div>
+    </div>
+    {% else %}
+    <div class="discount-banner neutral">
+      <div>
+        <div class="discount-pct" style="color:var(--primary)">≈ 合理</div>
+        <div style="font-size:11px;color:var(--gray-600)">偏差 {{ prediction.discount_pct }}%</div>
+      </div>
+      <div class="discount-text">
+        该房源定价与AI预测公允价基本吻合，属于<strong>正常市场定价区间</strong>。
+        价值判断需结合学区、配套等其他维度综合决策。
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Price distribution chart -->
+    <div class="chart-wrap">
+      <canvas id="priceChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Radar + Feature Importance -->
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🎯</span> 综合评分雷达图</div>
+      <div class="chart-wrap radar">
+        <canvas id="radarChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🔍</span> 价格影响因素权重</div>
+      <div class="chart-wrap radar">
+        <canvas id="featureChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dimension Details -->
+  <div class="cards-grid">
+
+    <!-- School -->
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🏫</span> 学区评估</div>
+      <div class="tier-badge tier-{{ school.tier }}">{{ school.tier }}</div>
+      <div class="info-row">
+        <span class="info-key">对口学校</span>
+        <span class="info-val">{{ school.school_name }}</span>
+      </div>
+      {% if school.distance_m is defined %}
+      <div class="info-row">
+        <span class="info-key">直线距离</span>
+        <span class="info-val">{{ school.distance_m }}米</span>
+      </div>
+      {% endif %}
+      <div class="info-row">
+        <span class="info-key">学区评分</span>
+        <span class="info-val">
+          <span class="score-badge {% if school.score >= 80 %}high{% elif school.score >= 60 %}mid{% else %}low{% endif %}">
+            {{ school.score }} / 100
+          </span>
+        </span>
+      </div>
+      <div class="desc-block">{{ school.description }}</div>
+    </div>
+
+    <!-- Amenities -->
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🚇</span> 周边配套</div>
+      {% if amenity.metro %}
+        {% for m in amenity.metro[:2] %}
+        <div class="info-row">
+          <span class="info-key">地铁</span>
+          <span class="info-val">{{ m.name }} · {{ m.distance_m }}米
+            {% for line in m.lines[:2] %}<span class="tag">{{ line }}</span>{% endfor %}
+          </span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="info-row"><span class="info-key">地铁</span><span class="info-val" style="color:var(--gray-600)">暂无数据</span></div>
+      {% endif %}
+      {% if amenity.malls %}
+      <div class="info-row">
+        <span class="info-key">购物中心</span>
+        <span class="info-val">{{ amenity.malls[0].name }} · {{ amenity.malls[0].distance_m }}米</span>
+      </div>
+      {% endif %}
+      {% if amenity.hospitals %}
+      <div class="info-row">
+        <span class="info-key">医院</span>
+        <span class="info-val">{{ amenity.hospitals[0].name }}</span>
+      </div>
+      {% endif %}
+      <div class="info-row">
+        <span class="info-key">配套综合评分</span>
+        <span class="info-val">
+          <span class="score-badge {% if amenity.composite_score >= 75 %}high{% elif amenity.composite_score >= 55 %}mid{% else %}low{% endif %}">
+            {{ amenity.composite_score }} / 100
+          </span>
+        </span>
+      </div>
+      <div class="desc-block">{{ amenity.description }}</div>
+    </div>
+
+    <!-- Sunlight -->
+    <div class="card">
+      <div class="card-title"><span class="card-icon">☀️</span> 采光条件</div>
+      <div class="info-row">
+        <span class="info-key">朝向</span>
+        <span class="info-val">{{ sunlight.orientation }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">楼层位置</span>
+        <span class="info-val">{{ sunlight.floor_info }}（位于{{ sunlight.floor_ratio_pct }}%高度）</span>
+      </div>
+      <div class="info-row">
+        <span class="info-key">采光等级</span>
+        <span class="info-val">
+          <span class="score-badge {% if sunlight.score >= 75 %}high{% elif sunlight.score >= 55 %}mid{% else %}low{% endif %}">
+            {{ sunlight.level }} · {{ sunlight.score }}/100
+          </span>
+        </span>
+      </div>
+      {% if sunlight.top_floor_note %}
+      <div class="info-row">
+        <span class="info-key">⚠️ 注意</span>
+        <span class="info-val" style="color:var(--warning)">{{ sunlight.top_floor_note }}</span>
+      </div>
+      {% endif %}
+      <div class="desc-block">{{ sunlight.description }}</div>
+    </div>
+
+    <!-- Noise -->
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🔇</span> 噪音环境</div>
+      <div class="info-row">
+        <span class="info-key">噪音等级</span>
+        <span class="info-val">
+          <span class="score-badge {% if noise.score >= 75 %}high{% elif noise.score >= 55 %}mid{% else %}low{% endif %}">
+            {{ noise.level }} · {{ noise.score }}/100
+          </span>
+        </span>
+      </div>
+      {% if noise.sources %}
+      <div class="info-row">
+        <span class="info-key">噪音来源</span>
+        <span class="info-val">{{ noise.sources | join("、") }}</span>
+      </div>
+      {% endif %}
+      <div class="desc-block">{{ noise.description }}</div>
+    </div>
+
+  </div>
+
+  <!-- Listing details -->
+  <div class="full-card">
+    <div class="section-title">📋 房源基本信息</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px;">
+      <div class="info-row"><span class="info-key">小区名称</span><span class="info-val">{{ listing.community_name }}</span></div>
+      <div class="info-row"><span class="info-key">总价</span><span class="info-val" style="color:var(--warning)">{{ listing.total_price_wan }}万元</span></div>
+      <div class="info-row"><span class="info-key">建筑面积</span><span class="info-val">{{ listing.area_sqm }}㎡</span></div>
+      <div class="info-row"><span class="info-key">单价</span><span class="info-val">{{ listing.unit_price_sqm|format_price }}元/㎡</span></div>
+      <div class="info-row"><span class="info-key">户型</span><span class="info-val">{{ listing.layout }}</span></div>
+      <div class="info-row"><span class="info-key">楼层</span><span class="info-val">{{ listing.floor }}/{{ listing.total_floors }}层</span></div>
+      <div class="info-row"><span class="info-key">朝向</span><span class="info-val">{{ listing.orientation }}</span></div>
+      <div class="info-row"><span class="info-key">装修情况</span><span class="info-val">{{ listing.decoration }}</span></div>
+      <div class="info-row"><span class="info-key">建成年份</span><span class="info-val">{{ listing.build_year }}年（楼龄{{ listing.age_years }}年）</span></div>
+      <div class="info-row"><span class="info-key">所在行政区</span><span class="info-val">{{ city_name }}{{ listing.district }}</span></div>
+    </div>
+  </div>
+
+  <!-- Undervalued listings -->
+  {% if undervalued %}
+  <div class="undervalue-section">
+    <div class="section-title">💎 同小区低估房源推荐（共 {{ undervalued|length }} 套）</div>
+    <p style="font-size:13px;color:var(--gray-600);margin-bottom:14px;">以下房源经AI模型识别，定价显著低于市场公允价，综合评分良好，建议优先考察。</p>
+    <table class="uv-table">
+      <thead>
+        <tr>
+          <th>房源</th>
+          <th>面积</th>
+          <th>挂牌价</th>
+          <th>预测公允价</th>
+          <th>折让幅度</th>
+          <th>可节省</th>
+          <th>综合评分</th>
+          <th>优势</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for uv in undervalued %}
+        <tr>
+          <td>{{ uv.listing.layout }}<br><span style="color:var(--gray-600);font-size:12px">{{ uv.listing.floor }}/{{ uv.listing.total_floors }}层·{{ uv.listing.orientation }}</span></td>
+          <td>{{ uv.listing.area_sqm }}㎡</td>
+          <td>{{ uv.listing.total_price_wan }}万<br><span style="color:var(--gray-600);font-size:12px">{{ uv.actual_price|format_price }}/㎡</span></td>
+          <td>{{ uv.predicted_price|format_price }}<br><span style="color:var(--gray-600);font-size:12px">元/㎡</span></td>
+          <td><span class="uv-discount">↓ {{ uv.discount_pct }}%</span></td>
+          <td><span class="uv-saving">≈ {{ uv.absolute_discount_wan }}万</span></td>
+          <td>
+            <span class="score-badge {% if uv.composite_score >= 75 %}high{% elif uv.composite_score >= 60 %}mid{% else %}low{% endif %}">
+              {{ uv.composite_score }}
+            </span>
+          </td>
+          <td style="font-size:12px;color:var(--gray-700)">{{ uv.reason }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- AI Verdict -->
+  <div class="full-card" style="border-left: 4px solid {{ score.grade_color }};">
+    <div class="section-title">🤖 AI综合判断</div>
+    <p style="font-size:15px;font-weight:600;color:{{ score.grade_color }};margin-bottom:8px;">
+      综合评级 {{ score.grade }} 级 · {{ score.recommendation.split("—")[0] }}
+    </p>
+    <p style="font-size:13px;color:var(--gray-700);line-height:1.9;">
+      本房源位于<strong>{{ city_name }}{{ listing.district }}</strong>，
+      建筑面积 <strong>{{ listing.area_sqm }}㎡</strong>，
+      挂牌总价 <strong>{{ listing.total_price_wan }}万元</strong>（{{ listing.unit_price_sqm|format_price }}元/㎡）。
+
+      AI价格模型基于同小区 <strong>{{ comparable_count }}</strong> 套可比房源训练，
+      预测公允价为 <strong>{{ prediction.predicted_price|format_price }}</strong> 元/㎡，
+      置信区间 {{ prediction.confidence_low|format_price }}–{{ prediction.confidence_high|format_price }} 元/㎡。
+
+      {% if prediction.discount_pct >= 5 %}
+      当前挂牌价<span style="color:var(--success)"><strong>低于公允价 {{ prediction.discount_pct }}%</strong></span>，
+      折让金额约 <strong>{{ ((prediction.predicted_price - listing.unit_price_sqm) * listing.area_sqm / 10000)|round(1) }}万元</strong>，
+      具备明确的价格套利空间，建议尽快安排实地看房。
+      {% elif prediction.discount_pct <= -5 %}
+      当前挂牌价<span style="color:var(--danger)"><strong>高于公允价 {{ prediction.discount_pct|abs }}%</strong></span>，
+      存在一定溢价，建议参考低估房源推荐表中的替代选项，或尝试与业主谈判降价。
+      {% else %}
+      当前定价处于合理区间，重点关注学区（{{ school.tier }}）和配套（评分{{ amenity.composite_score }}）等非价格因素。
+      {% endif %}
+
+      <br><br>
+      <strong>自住价值：</strong>
+      {% if score.dimensions.school >= 80 %}对口{{ school.tier }}，有子女家庭优先级高。{% endif %}
+      {% if score.dimensions.sunlight >= 80 %}{{ sunlight.orientation }}采光优秀。{% elif score.dimensions.sunlight < 55 %}采光条件一般，建议实地验证。{% endif %}
+      {% if score.dimensions.amenity >= 75 %}配套完善，生活便利度高。{% endif %}
+      {% if score.dimensions.noise < 55 %}噪音环境需重点核查。{% endif %}
+    </p>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer">
+    ⚠️ <strong>免责声明：</strong>本报告由AI模型基于公开数据自动生成，仅供参考，不构成投资建议。
+    价格预测模型存在误差，实际成交价受市场供需、房源具体情况、谈判空间等多重因素影响。
+    学区政策请以当地教育局最新划分为准，配套数据存在一定滞后性。
+    购房前请务必实地看房，并咨询专业房产律师和经纪人。
+    <br>报告生成时间：{{ report_date }} | 数据来源：链家/贝壳公开挂牌信息
+  </div>
+
+  <div class="watermark">Powered by AI房产决策助手 · 站在购房者视角</div>
+
+</div>
+
+<script>
+// Color helper
+function scoreColor(val) {
+  if (val >= 75) return '#16a34a';
+  if (val >= 55) return '#d97706';
+  return '#dc2626';
+}
+
+// 1. Price distribution chart
+const priceCtx = document.getElementById('priceChart').getContext('2d');
+const chartPrices = {{ chart_prices_json }};
+const chartLabels = {{ chart_labels_json }};
+const targetPrice = {{ target_price }};
+const predictedPrice = {{ predicted_price }};
+
+const barColors = chartPrices.map(p => {
+  const diff = (p - targetPrice) / targetPrice;
+  if (Math.abs(diff) < 0.03) return 'rgba(234, 179, 8, 0.85)';
+  if (p < targetPrice) return 'rgba(22, 163, 74, 0.6)';
+  return 'rgba(99, 102, 241, 0.55)';
+});
+
+new Chart(priceCtx, {
+  type: 'bar',
+  data: {
+    labels: chartLabels,
+    datasets: [
+      {
+        label: '房源单价（元/㎡）',
+        data: chartPrices,
+        backgroundColor: barColors,
+        borderRadius: 4,
+      },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => `${ctx.parsed.y.toLocaleString()} 元/㎡`
+        }
+      },
+      annotation: {
+        annotations: {
+          targetLine: {
+            type: 'line', yMin: targetPrice, yMax: targetPrice,
+            borderColor: '#d97706', borderWidth: 2, borderDash: [6, 3],
+            label: { display: true, content: `挂牌价 ${targetPrice.toLocaleString()}`, position: 'end', font: {size: 11} }
+          },
+          predictedLine: {
+            type: 'line', yMin: predictedPrice, yMax: predictedPrice,
+            borderColor: '#1d4ed8', borderWidth: 2, borderDash: [6, 3],
+            label: { display: true, content: `预测价 ${predictedPrice.toLocaleString()}`, position: 'start', font: {size: 11} }
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        ticks: { callback: v => (v/10000).toFixed(1) + '万' },
+        title: { display: true, text: '单价（元/㎡）', font: {size: 11} }
+      },
+      x: { ticks: { font: {size: 10}, maxRotation: 45 } }
+    }
+  }
+});
+
+// 2. Radar chart
+const radarCtx = document.getElementById('radarChart').getContext('2d');
+new Chart(radarCtx, {
+  type: 'radar',
+  data: {
+    labels: {{ radar_labels_json }},
+    datasets: [{
+      label: '本房源',
+      data: {{ radar_values_json }},
+      backgroundColor: 'rgba(29, 78, 216, 0.15)',
+      borderColor: '#1d4ed8',
+      borderWidth: 2,
+      pointBackgroundColor: '#1d4ed8',
+      pointRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: {
+      r: {
+        min: 0, max: 100,
+        ticks: { stepSize: 25, font: {size: 10} },
+        pointLabels: { font: {size: 12} }
+      }
+    },
+    plugins: { legend: { display: false } }
+  }
+});
+
+// 3. Feature importance bar
+const fiCtx = document.getElementById('featureChart').getContext('2d');
+new Chart(fiCtx, {
+  type: 'bar',
+  data: {
+    labels: {{ fi_labels_json }},
+    datasets: [{
+      label: '影响权重 %',
+      data: {{ fi_values_json }},
+      backgroundColor: [
+        '#1d4ed8','#16a34a','#d97706','#7c3aed','#dc2626','#0891b2'
+      ],
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => `${ctx.parsed.x}%` } }
+    },
+    scales: {
+      x: {
+        ticks: { callback: v => v + '%' },
+        title: { display: true, text: '价格影响权重', font: {size: 10} }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI房产决策助手 — 站在购房者视角</title>
+<style>
+  :root {
+    --primary: #1d4ed8;
+    --primary-dark: #1e3a8a;
+    --success: #16a34a;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-600: #4b5563;
+    --gray-900: #111827;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(160deg, #f0f4ff 0%, #e8f5e9 100%);
+    min-height: 100vh;
+    color: var(--gray-900);
+  }
+
+  /* Nav */
+  .nav {
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 14px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  }
+  .nav-logo { font-weight: 800; font-size: 17px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+  .nav-sub { font-size: 12px; color: var(--gray-600); font-weight: 400; }
+  .nav-badge { background: #fef3c7; color: #92400e; border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 56px 20px 36px;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: var(--primary);
+    color: white;
+    border-radius: 20px;
+    padding: 4px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    letter-spacing: 0.05em;
+  }
+  .hero-title {
+    font-size: 36px;
+    font-weight: 900;
+    line-height: 1.2;
+    margin-bottom: 14px;
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary), #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    font-size: 16px;
+    color: var(--gray-600);
+    max-width: 560px;
+    margin: 0 auto 32px;
+    line-height: 1.7;
+  }
+  .hero-features {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+  }
+  .feature-chip {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 13px;
+    color: var(--gray-600);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* Form card */
+  .form-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+    padding: 32px 36px;
+    max-width: 680px;
+    margin: 0 auto 40px;
+  }
+  .form-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .form-sub { font-size: 13px; color: var(--gray-600); margin-bottom: 24px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 540px) { .form-row { grid-template-columns: 1fr; } }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 13px; font-weight: 600; color: var(--gray-600); }
+  input, select {
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  input:focus, select:focus { border-color: var(--primary); }
+  input::placeholder { color: #9ca3af; }
+
+  .section-divider {
+    border: none; border-top: 1px solid var(--gray-200);
+    margin: 20px 0 16px;
+  }
+  .section-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+  }
+
+  .btn-submit {
+    width: 100%;
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.15s, transform 0.1s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-submit:hover { opacity: 0.92; }
+  .btn-submit:active { transform: scale(0.99); }
+  .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* Example buttons */
+  .examples {
+    margin-bottom: 16px;
+  }
+  .examples-label { font-size: 12px; color: var(--gray-600); margin-bottom: 8px; }
+  .example-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .example-btn {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--gray-900);
+    transition: background 0.1s;
+  }
+  .example-btn:hover { background: #e0e7ff; border-color: var(--primary); color: var(--primary); }
+
+  /* Loading */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 48px 20px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .loading.show { display: block; }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 4px solid var(--gray-200);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .loading-sub { font-size: 13px; color: var(--gray-600); }
+  .loading-steps { margin-top: 20px; }
+  .loading-step {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 0;
+    font-size: 13px;
+    color: var(--gray-600);
+    opacity: 0.4;
+    transition: opacity 0.3s;
+  }
+  .loading-step.active { opacity: 1; color: var(--primary); }
+  .loading-step.done { opacity: 0.7; color: var(--success); }
+
+  /* Error */
+  .error-box {
+    display: none;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 0 auto 20px;
+    max-width: 680px;
+    color: #991b1b;
+    font-size: 14px;
+  }
+  .error-box.show { display: block; }
+
+  /* Report frame */
+  .report-section { display: none; }
+  .report-section.show { display: block; }
+  .report-meta {
+    max-width: 900px;
+    margin: 0 auto 12px;
+    padding: 0 16px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  }
+  .report-score-summary {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .grade-big {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; font-weight: 900; color: white;
+  }
+  .report-actions { display: flex; gap: 8px; }
+  .btn-action {
+    background: white;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.1s;
+  }
+  .btn-action:hover { background: var(--gray-100); }
+  .btn-new { border-color: var(--primary); color: var(--primary); }
+  .btn-new:hover { background: #eff6ff; }
+
+  #reportFrame {
+    width: 100%; border: none;
+    min-height: 200px;
+    border-radius: var(--radius);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+  <div class="nav-logo">
+    🏠 <span>AI房产决策助手</span>
+    <span class="nav-sub">购房者视角 · 数据驱动</span>
+  </div>
+  <div class="nav-badge">Beta 免费体验</div>
+</nav>
+
+<!-- Main content -->
+<div id="mainSection">
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-tag">🤖 AI × 大数据 × 购房者视角</div>
+    <h1 class="hero-title">买房前，先看一份<br>AI价值评估报告</h1>
+    <p class="hero-sub">整合链家/贝壳公开数据，结合学区、噪音、日照、配套等12个维度，AI生成综合价值报告，识别真正低估的好房子</p>
+    <div class="hero-features">
+      <div class="feature-chip">💰 AI定价分析</div>
+      <div class="feature-chip">🏫 学区智能匹配</div>
+      <div class="feature-chip">☀️ 日照采光评分</div>
+      <div class="feature-chip">🔇 噪音环境评估</div>
+      <div class="feature-chip">🚇 配套便利性</div>
+      <div class="feature-chip">💎 低估房源识别</div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="form-card">
+    <div class="form-title">生成综合价值报告</div>
+    <div class="form-sub">输入目标小区，AI分析同小区所有在售房源，生成详细价值报告</div>
+
+    <div class="examples">
+      <div class="examples-label">🔥 快速体验（点击填入示例）：</div>
+      <div class="example-btns">
+        <button class="example-btn" onclick="fillExample('仁恒滨江园','sh','浦东新区',110000,128,15,32,'南北通透','精装修','3室2厅',2012,1380)">仁恒滨江园·上海</button>
+        <button class="example-btn" onclick="fillExample('汤臣一品','sh','浦东新区',280000,200,18,32,'南向','豪华装修','4室2厅',2005,5600)">汤臣一品·上海</button>
+        <button class="example-btn" onclick="fillExample('保利天悦','sh','静安区',98000,89,8,24,'南北通透','精装修','2室2厅',2018,872)">保利天悦·上海</button>
+        <button class="example-btn" onclick="fillExample('碧桂园','sh','闵行区',55000,95,6,18,'南向','简装修','3室2厅',2010,522)">碧桂园·上海</button>
+      </div>
+    </div>
+
+    <form id="analyzeForm" onsubmit="submitAnalysis(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>小区名称 *</label>
+          <input type="text" id="community_name" placeholder="例：仁恒滨江园" required>
+        </div>
+        <div class="form-group">
+          <label>城市</label>
+          <select id="city">
+            <optgroup label="一线城市">
+              <option value="sh">上海</option>
+              <option value="bj">北京</option>
+              <option value="sz">深圳</option>
+              <option value="gz">广州</option>
+            </optgroup>
+            <optgroup label="新一线城市">
+              <option value="hz">杭州</option>
+              <option value="cd">成都</option>
+              <option value="nj">南京</option>
+              <option value="wh">武汉</option>
+              <option value="sz_js">苏州</option>
+              <option value="xm">厦门</option>
+              <option value="cq">重庆</option>
+              <option value="ty">天津</option>
+              <option value="xa">西安</option>
+              <option value="cs">长沙</option>
+              <option value="zhengzhou">郑州</option>
+              <option value="hf">合肥</option>
+              <option value="qd">青岛</option>
+              <option value="nb">宁波</option>
+              <option value="fuzhou">福州</option>
+            </optgroup>
+            <optgroup label="其他热门城市">
+              <option value="wx">无锡</option>
+              <option value="sy">沈阳</option>
+              <option value="dg">东莞</option>
+              <option value="fo">佛山</option>
+              <option value="km">昆明</option>
+              <option value="nn">南宁</option>
+              <option value="hk">海口</option>
+              <option value="sy_hn">三亚</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+
+      <hr class="section-divider">
+      <div class="section-label">目标房源详情（可选，不填则分析小区中间价房源）</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>挂牌单价（元/㎡）</label>
+          <input type="number" id="unit_price" placeholder="例：68000">
+        </div>
+        <div class="form-group">
+          <label>建筑面积（㎡）</label>
+          <input type="number" id="area" placeholder="例：89">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>楼层</label>
+          <input type="number" id="floor" placeholder="例：12">
+        </div>
+        <div class="form-group">
+          <label>总楼层</label>
+          <input type="number" id="total_floors" placeholder="例：32">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>朝向</label>
+          <select id="orientation">
+            <option value="">不指定</option>
+            <option value="南北通透">南北通透</option>
+            <option value="南向">南向</option>
+            <option value="东南">东南</option>
+            <option value="西南">西南</option>
+            <option value="东向">东向</option>
+            <option value="西向">西向</option>
+            <option value="北向">北向</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>装修情况</label>
+          <select id="decoration">
+            <option value="">不指定</option>
+            <option value="豪华装修">豪华装修</option>
+            <option value="精装修">精装修</option>
+            <option value="简装修">简装修</option>
+            <option value="毛坯">毛坯</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>户型</label>
+          <select id="layout">
+            <option value="">不指定</option>
+            <option value="1室1厅">1室1厅</option>
+            <option value="2室1厅">2室1厅</option>
+            <option value="2室2厅">2室2厅</option>
+            <option value="3室1厅">3室1厅</option>
+            <option value="3室2厅">3室2厅</option>
+            <option value="4室2厅">4室2厅</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>建成年份</label>
+          <input type="number" id="build_year" placeholder="例：2015" min="1980" max="2024">
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">
+        <span>🔍</span> 生成AI价值报告
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- 位置确认弹窗 -->
+<div id="locationModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:16px;padding:28px;max-width:480px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+    <div style="font-size:17px;font-weight:700;margin-bottom:6px;">📍 确认小区位置</div>
+    <div style="font-size:13px;color:#6b7280;margin-bottom:18px;">高德找到以下匹配结果，请选择正确的小区，避免同名小区数据错误</div>
+    <div id="locationCandidates"></div>
+    <button onclick="confirmLocation(null)" style="margin-top:14px;width:100%;padding:10px;border:1.5px solid #e5e7eb;border-radius:8px;background:white;font-size:13px;cursor:pointer;color:#6b7280;">
+      找不到？跳过位置确认（配套数据可能不准）
+    </button>
+  </div>
+</div>
+
+<!-- Loading -->
+<div class="loading" id="loadingSection">
+  <div class="spinner"></div>
+  <div class="loading-text">AI正在分析中...</div>
+  <div class="loading-sub">正在抓取数据、训练价格模型、生成报告</div>
+  <div class="loading-steps">
+    <div class="loading-step" id="step1">📡 获取小区历史成交数据...</div>
+    <div class="loading-step" id="step2">🏫 分析学区配套信息...</div>
+    <div class="loading-step" id="step3">🤖 训练AI价格预测模型...</div>
+    <div class="loading-step" id="step4">📊 计算综合价值评分...</div>
+    <div class="loading-step" id="step5">📄 生成详细价值报告...</div>
+  </div>
+</div>
+
+<!-- Error -->
+<div class="error-box" id="errorBox"></div>
+
+<!-- Report -->
+<div class="report-section" id="reportSection">
+  <div class="report-meta">
+    <div class="report-score-summary" id="scoreSummary"></div>
+    <div class="report-actions">
+      <button class="btn-action" onclick="printReport()">🖨️ 打印/导出PDF</button>
+      <button class="btn-action btn-new" onclick="resetForm()">← 分析新房源</button>
+    </div>
+  </div>
+  <iframe id="reportFrame" scrolling="no"></iframe>
+</div>
+
+<script>
+function fillExample(community, city, district, price, area, floor, totalFloors, orient, decor, layout, buildYear, totalWan) {
+  document.getElementById('community_name').value = community;
+  document.getElementById('city').value = city;
+  document.getElementById('unit_price').value = price;
+  document.getElementById('area').value = area;
+  document.getElementById('floor').value = floor;
+  document.getElementById('total_floors').value = totalFloors;
+  document.getElementById('orientation').value = orient;
+  document.getElementById('decoration').value = decor;
+  document.getElementById('layout').value = layout;
+  document.getElementById('build_year').value = buildYear;
+}
+
+const GRADE_COLORS = { S: '#16a34a', A: '#2563eb', B: '#d97706', C: '#dc2626', D: '#7f1d1d' };
+let _pendingPayload = null;
+let _confirmedLat = null;
+let _confirmedLng = null;
+
+function confirmLocation(candidate) {
+  document.getElementById('locationModal').style.display = 'none';
+  if (candidate) {
+    _confirmedLat = candidate.lat;
+    _confirmedLng = candidate.lng;
+  }
+  _runAnalysis(_pendingPayload);
+}
+
+async function submitAnalysis(e) {
+  e.preventDefault();
+
+  const community = document.getElementById('community_name').value.trim();
+  const city = document.getElementById('city').value;
+  const unitPrice = parseInt(document.getElementById('unit_price').value) || null;
+  const area = parseFloat(document.getElementById('area').value) || null;
+  const floor = parseInt(document.getElementById('floor').value) || null;
+  const totalFloors = parseInt(document.getElementById('total_floors').value) || null;
+  const orient = document.getElementById('orientation').value || null;
+  const decor = document.getElementById('decoration').value || null;
+  const layout = document.getElementById('layout').value || null;
+  const buildYear = parseInt(document.getElementById('build_year').value) || null;
+
+  if (!community) { alert('请输入小区名称'); return; }
+
+  _confirmedLat = null; _confirmedLng = null;  // 每次新提交重置
+
+  const payload = {
+    community_name: community,
+    city,
+    target_unit_price: unitPrice,
+    target_area: area,
+    target_floor: floor,
+    target_total_floors: totalFloors,
+    target_orientation: orient,
+    target_decoration: decor,
+    target_layout: layout,
+    target_build_year: buildYear,
+  };
+
+  // 先做位置确认（只在第一次，或坐标未指定时）
+  if (!_confirmedLat) {
+    try {
+      const geoResp = await fetch(`/api/geocode?community_name=${encodeURIComponent(community)}&city=${city}`);
+      const geoData = await geoResp.json();
+      if (geoData.candidates && geoData.candidates.length > 0) {
+        _pendingPayload = payload;
+        document.getElementById('loadingSection').classList.remove('show');
+        document.getElementById('mainSection').style.display = 'none';
+        // 渲染候选列表
+        const container = document.getElementById('locationCandidates');
+        container.innerHTML = geoData.candidates.map((c, i) => `
+          <div onclick="confirmLocation(${JSON.stringify(c).replace(/"/g,"'")})"
+               style="border:1.5px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color 0.15s;"
+               onmouseover="this.style.borderColor='#1d4ed8'" onmouseout="this.style.borderColor='#e5e7eb'">
+            <div style="font-weight:600;font-size:14px;margin-bottom:4px;">${c.address}</div>
+            <div style="font-size:12px;color:#6b7280;">📍 ${c.district} &nbsp; 坐标 (${c.lat.toFixed(4)}, ${c.lng.toFixed(4)})</div>
+          </div>
+        `).join('');
+        document.getElementById('locationModal').style.display = 'flex';
+        return;
+      }
+    } catch(e) { /* 地理编码失败，直接继续 */ }
+  }
+
+  await _runAnalysis(payload);
+}
+
+async function _runAnalysis(payload) {
+  if (_confirmedLat) {
+    payload.lat = _confirmedLat;
+    payload.lng = _confirmedLng;
+  }
+
+  document.getElementById('mainSection').style.display = 'none';
+  document.getElementById('errorBox').classList.remove('show');
+  document.getElementById('reportSection').classList.remove('show');
+  document.getElementById('loadingSection').classList.add('show');
+
+  const steps = ['step1','step2','step3','step4','step5'];
+  let stepIdx = 0;
+  const stepTimer = setInterval(() => {
+    if (stepIdx > 0) document.getElementById(steps[stepIdx-1]).classList.replace('active','done');
+    if (stepIdx < steps.length) { document.getElementById(steps[stepIdx]).classList.add('active'); stepIdx++; }
+    else clearInterval(stepTimer);
+  }, 1200);
+
+  try {
+    const resp = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    clearInterval(stepTimer);
+    steps.forEach(s => {
+      document.getElementById(s).classList.remove('active');
+      document.getElementById(s).classList.add('done');
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.detail || `服务器错误 (${resp.status})`);
+    }
+
+    const data = await resp.json();
+
+    // Build score summary
+    const color = GRADE_COLORS[data.grade] || '#1d4ed8';
+    const scoreSummary = document.getElementById('scoreSummary');
+    scoreSummary.innerHTML = `
+      <div class="grade-big" style="background:${color}">${data.grade}</div>
+      <div>
+        <div style="font-weight:700;font-size:15px">${data.recommendation.split("—")[0]}</div>
+        <div style="font-size:12px;color:#6b7280;margin-top:2px">
+          综合评分 ${data.composite_score} ·
+          ${data.discount_pct > 0 ? `<span style="color:#16a34a">低估 ${data.discount_pct}%</span>` : data.discount_pct < -3 ? `<span style="color:#dc2626">溢价 ${Math.abs(data.discount_pct)}%</span>` : '定价合理'} ·
+          参考 ${data.listing_count} 套数据 ·
+          发现 ${data.undervalued_count} 套低估房源
+        </div>
+      </div>
+    `;
+
+    // Render report in iframe
+    const frame = document.getElementById('reportFrame');
+    frame.srcdoc = data.report_html;
+    frame.onload = () => {
+      // Auto-resize iframe
+      const resize = () => {
+        try {
+          frame.style.height = (frame.contentDocument.body.scrollHeight + 40) + 'px';
+        } catch(e) {}
+      };
+      resize();
+      setTimeout(resize, 500);
+      setTimeout(resize, 1500);
+    };
+
+    document.getElementById('loadingSection').classList.remove('show');
+    document.getElementById('reportSection').classList.add('show');
+    document.getElementById('reportSection').scrollIntoView({ behavior: 'smooth' });
+
+  } catch (err) {
+    clearInterval(stepTimer);
+    document.getElementById('loadingSection').classList.remove('show');
+    document.getElementById('mainSection').style.display = 'block';
+    const errBox = document.getElementById('errorBox');
+    errBox.textContent = `❌ 分析失败：${err.message}`;
+    errBox.classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function resetForm() {
+  document.getElementById('reportSection').classList.remove('show');
+  document.getElementById('mainSection').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function printReport() {
+  const frame = document.getElementById('reportFrame');
+  try {
+    frame.contentWindow.print();
+  } catch(e) {
+    alert('请使用浏览器右键→打印来保存PDF');
+  }
+}
+</script>
+</body>
+</html>

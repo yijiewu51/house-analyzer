@@ -1,0 +1,7 @@
+.env
+venv/
+__pycache__/
+*.pyc
+data/lianjia_cookies.json
+sample_report*.html
+.DS_Store
