@@ -22,6 +22,7 @@ def generate_report(
     district_avg_price: int,
     city_name: str,
     scraper_source: str = "mock",
+    ai_analysis_html: str = "",
 ) -> str:
     """Render and return the full HTML report as a string."""
 
@@ -83,6 +84,7 @@ def generate_report(
         "comparable_count": len(comparable_listings),
         "community_name": target_listing.get("community_name", ""),
         "is_mock_price": scraper_source != "lianjia",
+        "ai_analysis_html": ai_analysis_html,
     }
 
     return template.render(**context)

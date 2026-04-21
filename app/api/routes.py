@@ -19,6 +19,7 @@ from app.scoring.price_model import PriceModel
 from app.scoring.value_scorer import score_listing
 from app.scoring.undervalue_detector import detect_undervalued
 from app.reports.generator import generate_report
+from app.enrichment.ai_analysis import generate_ai_analysis
 from app.config import DISTRICT_AVG_PRICES, CITY_NAMES, MOCK_LISTING_COUNT
 
 logger = logging.getLogger(__name__)
@@ -187,8 +188,22 @@ async def analyze(req: AnalyzeRequest):
     city_prices = DISTRICT_AVG_PRICES.get(city, {})
     district_avg = city_prices.get(district, city_prices.get("default", 65000))
 
-    # --- Step 9: Generate report ---
+    # --- Step 9: AI analysis text ---
     city_name = CITY_NAMES.get(city, city.upper())
+    ai_analysis_html = await generate_ai_analysis(
+        listing=target,
+        prediction=target_prediction,
+        score_result=target_score,
+        school_info=school_info,
+        amenity_info=amenity_info,
+        sunlight_info=sunlight_info,
+        noise_info=noise_info,
+        undervalued=undervalued,
+        district_avg_price=district_avg,
+        city_name=city_name,
+    )
+
+    # --- Step 10: Generate report ---
     report_html = generate_report(
         target_listing=target,
         comparable_listings=listings,
@@ -202,6 +217,7 @@ async def analyze(req: AnalyzeRequest):
         district_avg_price=district_avg,
         city_name=city_name,
         scraper_source=scraper_source,
+        ai_analysis_html=ai_analysis_html,
     )
 
     return {

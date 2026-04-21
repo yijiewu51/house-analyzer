@@ -602,14 +602,18 @@
   <!-- AI Verdict -->
   <div class="full-card" style="border-left: 4px solid {{ score.grade_color }};">
     <div class="section-title">🤖 AI综合判断</div>
-    <p style="font-size:15px;font-weight:600;color:{{ score.grade_color }};margin-bottom:8px;">
+    <p style="font-size:15px;font-weight:600;color:{{ score.grade_color }};margin-bottom:12px;">
       综合评级 {{ score.grade }} 级 · {{ score.recommendation.split("—")[0] }}
     </p>
+    {% if ai_analysis_html %}
+    <div style="font-size:14px;color:var(--gray-700);line-height:1.9;">
+      {{ ai_analysis_html | safe }}
+    </div>
+    {% else %}
     <p style="font-size:13px;color:var(--gray-700);line-height:1.9;">
       本房源位于<strong>{{ city_name }}{{ listing.district }}</strong>，
       建筑面积 <strong>{{ listing.area_sqm }}㎡</strong>，
       挂牌总价 <strong>{{ listing.total_price_wan }}万元</strong>（{{ listing.unit_price_sqm|format_price }}元/㎡）。
-
       AI价格模型基于同小区 <strong>{{ comparable_count }}</strong> 套可比房源训练，
       预测公允价为 <strong>{{ prediction.predicted_price|format_price }}</strong> 元/㎡，
       置信区间 {{ prediction.confidence_low|format_price }}–{{ prediction.confidence_high|format_price }} 元/㎡。
@@ -632,6 +636,7 @@
       {% if score.dimensions.amenity >= 75 %}配套完善，生活便利度高。{% endif %}
       {% if score.dimensions.noise < 55 %}噪音环境需重点核查。{% endif %}
     </p>
+    {% endif %}
   </div>
 
   <!-- Disclaimer -->
